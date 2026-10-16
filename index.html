@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>筋トレ記録</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --primary: #bb86fc;
+      --border: #333333;
+      --error: #cf6679;
+    }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 400px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      color: #aaa;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      background-color: #2c2c2c;
+      border: 1px solid var(--border);
+      color: var(--text-color);
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #555;
+      cursor: not-allowed;
+    }
+    .totals-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .totals-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .totals-list li:last-child {
+      border-bottom: none;
+    }
+    .hidden {
+      display: none;
+    }
+    .error-msg {
+      color: var(--error);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>筋トレ記録</h1>
+
+  <!-- 日付選択 -->
+  <div class="card">
+    <div class="form-group" style="margin-bottom: 0;">
+      <label for="date-select">日付</label>
+      <input type="date" id="date-select">
+    </div>
+  </div>
+
+  <!-- 本日の合計 -->
+  <div class="card">
+    <label>この日の合計</label>
+    <ul id="totals-list" class="totals-list">
+      <li style="color: #888;">読み込み中...</li>
+    </ul>
+  </div>
+
+  <!-- 記録入力 -->
+  <div class="card">
+    <label>新しく記録する</label>
+    <div class="form-group">
+      <select id="exercise-select">
+        <option value="">読込中...</option>
+      </select>
+    </div>
+    <div class="form-group hidden" id="custom-exercise-group">
+      <input type="text" id="custom-exercise" placeholder="種目を自由入力">
+    </div>
+    <div class="form-group">
+      <input type="number" id="reps-input" placeholder="回数 (例: 10)" min="1">
+    </div>
+    <button id="submit-btn">記録する</button>
+  </div>
+</div>
+
+<script>
+  // ==========================================
+  // ★ここにGASのURLを貼り付けてください
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxshxvp0vvzKGh0lgGlLmoB7WCphGQ397UZ6Mx0-8exS2c3kpul3rPMwZEjustZijmz/exec';
+  
+  // ★GASと同じパスワードを設定してください
+  const SECRET_KEY = 'kintore2026';
+  // ==========================================
+
+  const dateSelect = document.getElementById('date-select');
+  const totalsList = document.getElementById('totals-list');
+  const exerciseSelect = document.getElementById('exercise-select');
+  const customExerciseGroup = document.getElementById('custom-exercise-group');
+  const customExerciseInput = document.getElementById('custom-exercise');
+  const repsInput = document.getElementById('reps-input');
+  const submitBtn = document.getElementById('submit-btn');
+
+  // 今日の日付をセット
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  dateSelect.value = `${yyyy}-${mm}-${dd}`;
+
+  loadData();
+
+  // 日付変更時に再読み込み
+  dateSelect.addEventListener('change', () => {
+    loadData();
+  });
+
+  // 「その他」選択で自由入力欄を表示
+  exerciseSelect.addEventListener('change', (e) => {
+    if (e.target.value === 'その他') {
+      customExerciseGroup.classList.remove('hidden');
+    } else {
+      customExerciseGroup.classList.add('hidden');
+      customExerciseInput.value = '';
+    }
+  });
+
+  // 記録を送信
+  submitBtn.addEventListener('click', async () => {
+    const date = dateSelect.value;
+    let exercise = exerciseSelect.value;
+    if (exercise === 'その他') {
+      exercise = customExerciseInput.value.trim();
+    }
+    const reps = parseInt(repsInput.value, 10);
+
+    if (!date || !exercise || !reps || reps <= 0) {
+      alert("すべての項目を正しく入力してください。");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "送信中...";
+
+    const payload = {
+      date: date,
+      exercise: exercise,
+      reps: reps,
+      pass: SECRET_KEY // ★パスワードを送信データに含める
+    };
+
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CORS回避のためtext/plain
+        body: JSON.stringify(payload)
+      });
+      
+      const result = await response.json();
+      if (result.error) {
+        alert(result.error);
+        return;
+      }
+      
+      // 入力欄をクリアして合計を再取得
+      repsInput.value = '';
+      if (exerciseSelect.value === 'その他') customExerciseInput.value = '';
+      await loadData();
+      
+    } catch (error) {
+      alert("エラーが発生しました: " + error.message);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "記録する";
+    }
+  });
+
+  // データをGASから取得
+  async function loadData() {
+    if (!GAS_URL.startsWith('http')) {
+      totalsList.innerHTML = '<li>GASのURLを設定してください</li>';
+      exerciseSelect.innerHTML = '<option value="">GASURL未設定</option>';
+      return;
+    }
+
+    totalsList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
+    try {
+      const targetDate = dateSelect.value;
+      // ★URLの末尾にパスワードを付与
+      const response = await fetch(`${GAS_URL}?date=${targetDate}&pass=${SECRET_KEY}`);
+      const data = await response.json();
+
+      if (data.error) {
+        totalsList.innerHTML = `<li class="error-msg">${data.error}</li>`;
+        exerciseSelect.innerHTML = '<option value="">読込エラー</option>';
+        return;
+      }
+
+      // プルダウンの更新
+      const currentSelection = exerciseSelect.value;
+      exerciseSelect.innerHTML = '';
+      data.choices.forEach(choice => {
+        const option = document.createElement('option');
+        option.value = choice;
+        option.textContent = choice;
+        exerciseSelect.appendChild(option);
+      });
+      // 以前の選択肢が復元できれば復元
+      if (currentSelection && [...exerciseSelect.options].some(o => o.value === currentSelection)) {
+        exerciseSelect.value = currentSelection;
+      }
+
+      // 合計リストの更新
+      totalsList.innerHTML = '';
+      const totals = data.totals;
+      if (Object.keys(totals).length === 0) {
+        totalsList.innerHTML = '<li style="color: #888;">この日の記録はありません</li>';
+      } else {
+        for (const [ex, sum] of Object.entries(totals)) {
+          const li = document.createElement('li');
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = ex;
+          const countSpan = document.createElement('span');
+          countSpan.textContent = `${sum} 回`;
+          
+          li.appendChild(nameSpan);
+          li.appendChild(countSpan);
+          totalsList.appendChild(li);
+        }
+      }
+    } catch (error) {
+      totalsList.innerHTML = `<li class="error-msg">読込エラー: ${error.message}</li>`;
+    }
+  }
+</script>
+</body>
+</html>
