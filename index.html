@@ -12,6 +12,7 @@
       --primary: #bb86fc;
       --border: #333333;
       --error: #cf6679;
+      --edit: #03dac6;
     }
     body {
       background-color: var(--bg-color);
@@ -21,6 +22,7 @@
       padding: 20px;
       display: flex;
       justify-content: center;
+      padding-bottom: 50px;
     }
     .container {
       width: 100%;
@@ -46,6 +48,7 @@
       margin-bottom: 8px;
       font-size: 14px;
       color: #aaa;
+      font-weight: bold;
     }
     input, select {
       width: 100%;
@@ -76,28 +79,44 @@
       background-color: #555;
       cursor: not-allowed;
     }
-    .totals-list {
+    .btn-cancel {
+      background-color: #555;
+      color: #fff;
+      margin-top: 10px;
+    }
+    .totals-list, .history-list {
       list-style: none;
       padding: 0;
       margin: 0;
     }
-    .totals-list li {
+    .totals-list li, .history-list li {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 12px 0;
       border-bottom: 1px solid var(--border);
     }
-    .totals-list li:last-child {
+    .totals-list li:last-child, .history-list li:last-child {
       border-bottom: none;
     }
-    .hidden {
-      display: none;
+    .history-text {
+      font-size: 15px;
     }
-    .error-msg {
-      color: var(--error);
-      font-size: 14px;
-      margin-top: 8px;
+    .btn-group {
+      display: flex;
+      gap: 6px;
     }
+    .btn-small {
+      width: auto;
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+    .btn-edit { background-color: var(--edit); color: #000; }
+    .btn-delete { background-color: var(--error); color: #fff; }
+    
+    .hidden { display: none; }
+    .error-msg { color: var(--error); font-size: 14px; }
   </style>
 </head>
 <body>
@@ -121,9 +140,17 @@
     </ul>
   </div>
 
-  <!-- 記録入力 -->
+  <!-- 本日の履歴（編集・削除用） -->
   <div class="card">
-    <label>新しく記録する</label>
+    <label>履歴 (修正・削除)</label>
+    <ul id="history-list" class="history-list">
+      <li style="color: #888;">読み込み中...</li>
+    </ul>
+  </div>
+
+  <!-- 記録入力 / 編集フォーム -->
+  <div class="card" id="input-form-card">
+    <label id="form-title">新しく記録する</label>
     <div class="form-group">
       <select id="exercise-select">
         <option value="">読込中...</option>
@@ -136,13 +163,14 @@
       <input type="number" id="reps-input" placeholder="回数 (例: 10)" min="1">
     </div>
     <button id="submit-btn">記録する</button>
+    <button id="cancel-btn" class="btn-cancel hidden">編集をキャンセル</button>
   </div>
 </div>
 
 <script>
   // ==========================================
   // ★ここにGASのURLを貼り付けてください
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxshxvp0vvzKGh0lgGlLmoB7WCphGQ397UZ6Mx0-8exS2c3kpul3rPMwZEjustZijmz/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzupA7ptiLLqHSl2R-OTTuqQhyiVBtpMQBJiaql7qCFkfvm2SU3fOYqscnrrBxQz360/exec';
   
   // ★GASと同じパスワードを設定してください
   const SECRET_KEY = 'kintore2026';
@@ -150,11 +178,16 @@
 
   const dateSelect = document.getElementById('date-select');
   const totalsList = document.getElementById('totals-list');
+  const historyList = document.getElementById('history-list');
   const exerciseSelect = document.getElementById('exercise-select');
   const customExerciseGroup = document.getElementById('custom-exercise-group');
   const customExerciseInput = document.getElementById('custom-exercise');
   const repsInput = document.getElementById('reps-input');
   const submitBtn = document.getElementById('submit-btn');
+  const cancelBtn = document.getElementById('cancel-btn');
+  const formTitle = document.getElementById('form-title');
+
+  let editingRow = null; // 編集中の行番号を保持する変数
 
   // 今日の日付をセット
   const today = new Date();
@@ -167,6 +200,7 @@
 
   // 日付変更時に再読み込み
   dateSelect.addEventListener('change', () => {
+    resetForm();
     loadData();
   });
 
@@ -180,7 +214,10 @@
     }
   });
 
-  // 記録を送信
+  // 編集キャンセルボタン
+  cancelBtn.addEventListener('click', resetForm);
+
+  // 記録を送信 (追加 または 更新)
   submitBtn.addEventListener('click', async () => {
     const date = dateSelect.value;
     let exercise = exerciseSelect.value;
@@ -198,16 +235,18 @@
     submitBtn.textContent = "送信中...";
 
     const payload = {
+      action: editingRow ? 'update' : 'add',
+      row: editingRow,
       date: date,
       exercise: exercise,
       reps: reps,
-      pass: SECRET_KEY // ★パスワードを送信データに含める
+      pass: SECRET_KEY
     };
 
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // CORS回避のためtext/plain
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
       
@@ -217,37 +256,102 @@
         return;
       }
       
-      // 入力欄をクリアして合計を再取得
-      repsInput.value = '';
-      if (exerciseSelect.value === 'その他') customExerciseInput.value = '';
+      resetForm();
       await loadData();
       
     } catch (error) {
       alert("エラーが発生しました: " + error.message);
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = "記録する";
     }
   });
 
+  // レコードの削除
+  async function deleteRecord(row) {
+    if (!confirm("この記録を削除してもよろしいですか？")) return;
+    
+    // 削除中表示
+    historyList.innerHTML = '<li style="color: #888;">削除中...</li>';
+
+    const payload = {
+      action: 'delete',
+      row: row,
+      pass: SECRET_KEY
+    };
+
+    try {
+      const response = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json();
+      if (result.error) alert(result.error);
+      
+      if (editingRow === row) resetForm();
+      await loadData();
+    } catch (error) {
+      alert("エラーが発生しました: " + error.message);
+      await loadData();
+    }
+  }
+
+  // 編集モードに入る処理
+  function startEdit(row, exercise, reps) {
+    editingRow = row;
+    
+    const options = [...exerciseSelect.options].map(o => o.value);
+    if (options.includes(exercise)) {
+      exerciseSelect.value = exercise;
+      customExerciseGroup.classList.add('hidden');
+      customExerciseInput.value = '';
+    } else {
+      exerciseSelect.value = 'その他';
+      customExerciseGroup.classList.remove('hidden');
+      customExerciseInput.value = exercise;
+    }
+    
+    repsInput.value = reps;
+    
+    formTitle.textContent = "記録を修正する";
+    formTitle.style.color = "var(--edit)";
+    submitBtn.textContent = "更新する";
+    submitBtn.style.backgroundColor = "var(--edit)";
+    cancelBtn.classList.remove('hidden');
+
+    // フォームまでスクロール
+    document.getElementById('input-form-card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // フォームを初期状態に戻す
+  function resetForm() {
+    editingRow = null;
+    formTitle.textContent = "新しく記録する";
+    formTitle.style.color = "#aaa";
+    submitBtn.textContent = "記録する";
+    submitBtn.style.backgroundColor = "var(--primary)";
+    cancelBtn.classList.add('hidden');
+    repsInput.value = '';
+    exerciseSelect.value = '';
+    customExerciseGroup.classList.add('hidden');
+    customExerciseInput.value = '';
+  }
+
   // データをGASから取得
   async function loadData() {
-    if (!GAS_URL.startsWith('http')) {
-      totalsList.innerHTML = '<li>GASのURLを設定してください</li>';
-      exerciseSelect.innerHTML = '<option value="">GASURL未設定</option>';
-      return;
-    }
+    if (!GAS_URL.startsWith('http')) return;
 
     totalsList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
+    historyList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
+
     try {
       const targetDate = dateSelect.value;
-      // ★URLの末尾にパスワードを付与
       const response = await fetch(`${GAS_URL}?date=${targetDate}&pass=${SECRET_KEY}`);
       const data = await response.json();
 
       if (data.error) {
         totalsList.innerHTML = `<li class="error-msg">${data.error}</li>`;
-        exerciseSelect.innerHTML = '<option value="">読込エラー</option>';
+        historyList.innerHTML = `<li class="error-msg">${data.error}</li>`;
         return;
       }
 
@@ -260,7 +364,6 @@
         option.textContent = choice;
         exerciseSelect.appendChild(option);
       });
-      // 以前の選択肢が復元できれば復元
       if (currentSelection && [...exerciseSelect.options].some(o => o.value === currentSelection)) {
         exerciseSelect.value = currentSelection;
       }
@@ -277,14 +380,50 @@
           nameSpan.textContent = ex;
           const countSpan = document.createElement('span');
           countSpan.textContent = `${sum} 回`;
-          
           li.appendChild(nameSpan);
           li.appendChild(countSpan);
           totalsList.appendChild(li);
         }
       }
+
+      // 履歴リストの更新
+      historyList.innerHTML = '';
+      const history = data.history || [];
+      if (history.length === 0) {
+        historyList.innerHTML = '<li style="color: #888;">この日の記録はありません</li>';
+      } else {
+        history.forEach(item => {
+          const li = document.createElement('li');
+          
+          const textSpan = document.createElement('span');
+          textSpan.className = 'history-text';
+          textSpan.textContent = `${item.exercise} - ${item.reps}回`;
+          
+          const btnGroup = document.createElement('div');
+          btnGroup.className = 'btn-group';
+          
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn-small btn-edit';
+          editBtn.textContent = '編集';
+          editBtn.onclick = () => startEdit(item.row, item.exercise, item.reps);
+          
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn-small btn-delete';
+          delBtn.textContent = '削除';
+          delBtn.onclick = () => deleteRecord(item.row);
+          
+          btnGroup.appendChild(editBtn);
+          btnGroup.appendChild(delBtn);
+          
+          li.appendChild(textSpan);
+          li.appendChild(btnGroup);
+          historyList.appendChild(li);
+        });
+      }
+
     } catch (error) {
       totalsList.innerHTML = `<li class="error-msg">読込エラー: ${error.message}</li>`;
+      historyList.innerHTML = `<li class="error-msg">読込エラー</li>`;
     }
   }
 </script>
