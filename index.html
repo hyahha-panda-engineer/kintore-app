@@ -43,6 +43,10 @@
     .form-group {
       margin-bottom: 16px;
     }
+    .row-inputs {
+      display: flex;
+      gap: 10px;
+    }
     label {
       display: block;
       margin-bottom: 8px;
@@ -168,14 +172,15 @@
       <div class="form-group hidden" id="custom-exercise-group">
         <input type="text" id="custom-exercise" placeholder="種目を自由入力">
       </div>
-      <div class="form-group">
-        <input type="number" id="reps-input" placeholder="回数 (例: 10)" min="1">
+      <div class="form-group row-inputs">
+        <input type="number" id="weight-input" placeholder="重量(kg) ※自重は空欄" min="0" step="0.5">
+        <input type="number" id="reps-input" placeholder="回数" min="1">
       </div>
       <button id="submit-btn">記録する</button>
       <button id="cancel-btn" class="btn-cancel hidden">編集をキャンセル</button>
     </div>
 
-    <!-- 本日の履歴（編集・削除用）を下に移動 -->
+    <!-- 本日の履歴 -->
     <div class="card">
       <label>履歴 (修正・削除)</label>
       <ul id="history-list" class="history-list">
@@ -183,21 +188,19 @@
       </ul>
     </div>
     
-    <!-- ログアウトボタン -->
     <button id="logout-btn" class="btn-logout">ログアウト</button>
   </div>
 </div>
 
 <script>
   // ==========================================
-  // ★ここにGASのURLを貼り付けてください（パスワードは不要になりました）
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwHlRM7JMN19kIGMtpTcl4tTU3FH6GM6l24kVt-gmUWgfchfitLtKvMW-sDYapiR5tz/exec';
+  // ★ここにGASのURLを貼り付けてください
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbysN4BYl5VB9gRs-8p4vSNUPnr8WFzX8UA1-R18QNQHSQ_Q39t65B0cBslI9WeIIPyi/exec';
   // ==========================================
 
   let currentPass = localStorage.getItem('kintore_pass') || '';
   let editingRow = null;
 
-  // DOM要素の取得
   const loginSection = document.getElementById('login-section');
   const appSection = document.getElementById('app-section');
   const passwordInput = document.getElementById('password-input');
@@ -210,12 +213,12 @@
   const exerciseSelect = document.getElementById('exercise-select');
   const customExerciseGroup = document.getElementById('custom-exercise-group');
   const customExerciseInput = document.getElementById('custom-exercise');
+  const weightInput = document.getElementById('weight-input');
   const repsInput = document.getElementById('reps-input');
   const submitBtn = document.getElementById('submit-btn');
   const cancelBtn = document.getElementById('cancel-btn');
   const formTitle = document.getElementById('form-title');
 
-  // 初期化
   init();
 
   function init() {
@@ -224,11 +227,9 @@
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     dateSelect.value = `${yyyy}-${mm}-${dd}`;
-
     checkLoginState();
   }
 
-  // ログイン状態の確認
   function checkLoginState() {
     if (currentPass) {
       loginSection.classList.add('hidden');
@@ -240,7 +241,6 @@
     }
   }
 
-  // ログイン処理
   loginBtn.addEventListener('click', () => {
     const pass = passwordInput.value.trim();
     if (!pass) return;
@@ -250,7 +250,6 @@
     checkLoginState();
   });
 
-  // ログアウト処理
   function forceLogout(message) {
     if (message) alert(message);
     currentPass = '';
@@ -258,17 +257,13 @@
     checkLoginState();
   }
   
-  logoutBtn.addEventListener('click', () => {
-    forceLogout("ログアウトしました");
-  });
+  logoutBtn.addEventListener('click', () => forceLogout("ログアウトしました"));
 
-  // 日付変更時
   dateSelect.addEventListener('change', () => {
     resetForm();
     loadData();
   });
 
-  // 「その他」選択
   exerciseSelect.addEventListener('change', (e) => {
     if (e.target.value === 'その他') {
       customExerciseGroup.classList.remove('hidden');
@@ -280,15 +275,15 @@
 
   cancelBtn.addEventListener('click', resetForm);
 
-  // 記録を送信 (追加/更新)
   submitBtn.addEventListener('click', async () => {
     const date = dateSelect.value;
     let exercise = exerciseSelect.value;
     if (exercise === 'その他') exercise = customExerciseInput.value.trim();
+    const weight = parseFloat(weightInput.value) || 0;
     const reps = parseInt(repsInput.value, 10);
 
     if (!date || !exercise || !reps || reps <= 0) {
-      alert("すべての項目を正しく入力してください。");
+      alert("種目と回数は正しく入力してください。");
       return;
     }
 
@@ -300,6 +295,7 @@
       row: editingRow,
       date: date,
       exercise: exercise,
+      weight: weight,
       reps: reps,
       pass: currentPass
     };
@@ -322,7 +318,6 @@
       
       resetForm();
       await loadData();
-      
     } catch (error) {
       alert("エラーが発生しました: " + error.message);
     } finally {
@@ -330,11 +325,9 @@
     }
   });
 
-  // レコード削除
   async function deleteRecord(row) {
     if (!confirm("この記録を削除してもよろしいですか？")) return;
     historyList.innerHTML = '<li style="color: #888;">削除中...</li>';
-
     const payload = { action: 'delete', row: row, pass: currentPass };
 
     try {
@@ -347,9 +340,7 @@
       if (result.error === 'auth_error') {
         forceLogout(result.message);
         return;
-      } else if (result.error) {
-        alert(result.error);
-      }
+      } else if (result.error) alert(result.error);
       
       if (editingRow === row) resetForm();
       await loadData();
@@ -359,7 +350,7 @@
     }
   }
 
-  function startEdit(row, exercise, reps) {
+  function startEdit(row, exercise, weight, reps) {
     editingRow = row;
     const options = [...exerciseSelect.options].map(o => o.value);
     if (options.includes(exercise)) {
@@ -372,7 +363,9 @@
       customExerciseInput.value = exercise;
     }
     
+    weightInput.value = weight > 0 ? weight : '';
     repsInput.value = reps;
+    
     formTitle.textContent = "記録を修正する";
     formTitle.style.color = "var(--edit)";
     submitBtn.textContent = "更新する";
@@ -388,13 +381,13 @@
     submitBtn.textContent = "記録する";
     submitBtn.style.backgroundColor = "var(--primary)";
     cancelBtn.classList.add('hidden');
+    weightInput.value = '';
     repsInput.value = '';
     exerciseSelect.value = '';
     customExerciseGroup.classList.add('hidden');
     customExerciseInput.value = '';
   }
 
-  // データ取得
   async function loadData() {
     if (!GAS_URL.startsWith('http')) return;
     totalsList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
@@ -426,23 +419,32 @@
         exerciseSelect.value = currentSelection;
       }
 
+      // 合計リストの描画
       totalsList.innerHTML = '';
       const totals = data.totals;
       if (Object.keys(totals).length === 0) {
         totalsList.innerHTML = '<li style="color: #888;">この日の記録はありません</li>';
       } else {
-        for (const [ex, sum] of Object.entries(totals)) {
+        for (const [ex, stats] of Object.entries(totals)) {
           const li = document.createElement('li');
           const nameSpan = document.createElement('span');
           nameSpan.textContent = ex;
           const countSpan = document.createElement('span');
-          countSpan.textContent = `${sum} 回`;
+          
+          // 総負荷量(kg)がある場合は表示、自重のみなら回数だけ
+          if (stats.volume > 0) {
+            countSpan.textContent = `${stats.volume}kg (${stats.reps}回)`;
+          } else {
+            countSpan.textContent = `${stats.reps}回`;
+          }
+          
           li.appendChild(nameSpan);
           li.appendChild(countSpan);
           totalsList.appendChild(li);
         }
       }
 
+      // 履歴リストの描画
       historyList.innerHTML = '';
       const history = data.history || [];
       if (history.length === 0) {
@@ -452,7 +454,12 @@
           const li = document.createElement('li');
           const textSpan = document.createElement('span');
           textSpan.className = 'history-text';
-          textSpan.textContent = `${item.exercise} - ${item.reps}回`;
+          
+          if (item.weight > 0) {
+            textSpan.textContent = `${item.exercise} - ${item.weight}kg × ${item.reps}回`;
+          } else {
+            textSpan.textContent = `${item.exercise} - ${item.reps}回`;
+          }
           
           const btnGroup = document.createElement('div');
           btnGroup.className = 'btn-group';
@@ -460,7 +467,7 @@
           const editBtn = document.createElement('button');
           editBtn.className = 'btn-small btn-edit';
           editBtn.textContent = '編集';
-          editBtn.onclick = () => startEdit(item.row, item.exercise, item.reps);
+          editBtn.onclick = () => startEdit(item.row, item.exercise, item.weight, item.reps);
           
           const delBtn = document.createElement('button');
           delBtn.className = 'btn-small btn-delete';
