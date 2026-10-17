@@ -84,6 +84,12 @@
       color: #fff;
       margin-top: 10px;
     }
+    .btn-logout {
+      background-color: transparent;
+      color: var(--error);
+      border: 1px solid var(--error);
+      margin-top: 20px;
+    }
     .totals-list, .history-list {
       list-style: none;
       padding: 0;
@@ -115,7 +121,7 @@
     .btn-edit { background-color: var(--edit); color: #000; }
     .btn-delete { background-color: var(--error); color: #fff; }
     
-    .hidden { display: none; }
+    .hidden { display: none !important; }
     .error-msg { color: var(--error); font-size: 14px; }
   </style>
 </head>
@@ -124,57 +130,79 @@
 <div class="container">
   <h1>筋トレ記録</h1>
 
-  <!-- 日付選択 -->
-  <div class="card">
-    <div class="form-group" style="margin-bottom: 0;">
-      <label for="date-select">日付</label>
-      <input type="date" id="date-select">
-    </div>
-  </div>
-
-  <!-- 本日の合計 -->
-  <div class="card">
-    <label>この日の合計</label>
-    <ul id="totals-list" class="totals-list">
-      <li style="color: #888;">読み込み中...</li>
-    </ul>
-  </div>
-
-  <!-- 本日の履歴（編集・削除用） -->
-  <div class="card">
-    <label>履歴 (修正・削除)</label>
-    <ul id="history-list" class="history-list">
-      <li style="color: #888;">読み込み中...</li>
-    </ul>
-  </div>
-
-  <!-- 記録入力 / 編集フォーム -->
-  <div class="card" id="input-form-card">
-    <label id="form-title">新しく記録する</label>
+  <!-- ログイン画面 -->
+  <div id="login-section" class="card hidden">
+    <label>ログイン</label>
     <div class="form-group">
-      <select id="exercise-select">
-        <option value="">読込中...</option>
-      </select>
+      <input type="password" id="password-input" placeholder="パスワードを入力">
     </div>
-    <div class="form-group hidden" id="custom-exercise-group">
-      <input type="text" id="custom-exercise" placeholder="種目を自由入力">
+    <button id="login-btn">ログイン</button>
+  </div>
+
+  <!-- アプリ画面 -->
+  <div id="app-section" class="hidden">
+    <!-- 日付選択 -->
+    <div class="card">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label for="date-select">日付</label>
+        <input type="date" id="date-select">
+      </div>
     </div>
-    <div class="form-group">
-      <input type="number" id="reps-input" placeholder="回数 (例: 10)" min="1">
+
+    <!-- 本日の合計 -->
+    <div class="card">
+      <label>この日の合計</label>
+      <ul id="totals-list" class="totals-list">
+        <li style="color: #888;">読み込み中...</li>
+      </ul>
     </div>
-    <button id="submit-btn">記録する</button>
-    <button id="cancel-btn" class="btn-cancel hidden">編集をキャンセル</button>
+
+    <!-- 記録入力 / 編集フォーム -->
+    <div class="card" id="input-form-card">
+      <label id="form-title">新しく記録する</label>
+      <div class="form-group">
+        <select id="exercise-select">
+          <option value="">読込中...</option>
+        </select>
+      </div>
+      <div class="form-group hidden" id="custom-exercise-group">
+        <input type="text" id="custom-exercise" placeholder="種目を自由入力">
+      </div>
+      <div class="form-group">
+        <input type="number" id="reps-input" placeholder="回数 (例: 10)" min="1">
+      </div>
+      <button id="submit-btn">記録する</button>
+      <button id="cancel-btn" class="btn-cancel hidden">編集をキャンセル</button>
+    </div>
+
+    <!-- 本日の履歴（編集・削除用）を下に移動 -->
+    <div class="card">
+      <label>履歴 (修正・削除)</label>
+      <ul id="history-list" class="history-list">
+        <li style="color: #888;">読み込み中...</li>
+      </ul>
+    </div>
+    
+    <!-- ログアウトボタン -->
+    <button id="logout-btn" class="btn-logout">ログアウト</button>
   </div>
 </div>
 
 <script>
   // ==========================================
-  // ★ここにGASのURLを貼り付けてください
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzupA7ptiLLqHSl2R-OTTuqQhyiVBtpMQBJiaql7qCFkfvm2SU3fOYqscnrrBxQz360/exec';
-  
-  // ★GASと同じパスワードを設定してください
-  const SECRET_KEY = 'kintore2026';
+  // ★ここにGASのURLを貼り付けてください（パスワードは不要になりました）
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwHlRM7JMN19kIGMtpTcl4tTU3FH6GM6l24kVt-gmUWgfchfitLtKvMW-sDYapiR5tz/exec';
   // ==========================================
+
+  let currentPass = localStorage.getItem('kintore_pass') || '';
+  let editingRow = null;
+
+  // DOM要素の取得
+  const loginSection = document.getElementById('login-section');
+  const appSection = document.getElementById('app-section');
+  const passwordInput = document.getElementById('password-input');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
 
   const dateSelect = document.getElementById('date-select');
   const totalsList = document.getElementById('totals-list');
@@ -187,24 +215,60 @@
   const cancelBtn = document.getElementById('cancel-btn');
   const formTitle = document.getElementById('form-title');
 
-  let editingRow = null; // 編集中の行番号を保持する変数
+  // 初期化
+  init();
 
-  // 今日の日付をセット
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  dateSelect.value = `${yyyy}-${mm}-${dd}`;
+  function init() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    dateSelect.value = `${yyyy}-${mm}-${dd}`;
 
-  loadData();
+    checkLoginState();
+  }
 
-  // 日付変更時に再読み込み
+  // ログイン状態の確認
+  function checkLoginState() {
+    if (currentPass) {
+      loginSection.classList.add('hidden');
+      appSection.classList.remove('hidden');
+      loadData();
+    } else {
+      loginSection.classList.remove('hidden');
+      appSection.classList.add('hidden');
+    }
+  }
+
+  // ログイン処理
+  loginBtn.addEventListener('click', () => {
+    const pass = passwordInput.value.trim();
+    if (!pass) return;
+    currentPass = pass;
+    localStorage.setItem('kintore_pass', pass);
+    passwordInput.value = '';
+    checkLoginState();
+  });
+
+  // ログアウト処理
+  function forceLogout(message) {
+    if (message) alert(message);
+    currentPass = '';
+    localStorage.removeItem('kintore_pass');
+    checkLoginState();
+  }
+  
+  logoutBtn.addEventListener('click', () => {
+    forceLogout("ログアウトしました");
+  });
+
+  // 日付変更時
   dateSelect.addEventListener('change', () => {
     resetForm();
     loadData();
   });
 
-  // 「その他」選択で自由入力欄を表示
+  // 「その他」選択
   exerciseSelect.addEventListener('change', (e) => {
     if (e.target.value === 'その他') {
       customExerciseGroup.classList.remove('hidden');
@@ -214,16 +278,13 @@
     }
   });
 
-  // 編集キャンセルボタン
   cancelBtn.addEventListener('click', resetForm);
 
-  // 記録を送信 (追加 または 更新)
+  // 記録を送信 (追加/更新)
   submitBtn.addEventListener('click', async () => {
     const date = dateSelect.value;
     let exercise = exerciseSelect.value;
-    if (exercise === 'その他') {
-      exercise = customExerciseInput.value.trim();
-    }
+    if (exercise === 'その他') exercise = customExerciseInput.value.trim();
     const reps = parseInt(repsInput.value, 10);
 
     if (!date || !exercise || !reps || reps <= 0) {
@@ -240,7 +301,7 @@
       date: date,
       exercise: exercise,
       reps: reps,
-      pass: SECRET_KEY
+      pass: currentPass
     };
 
     try {
@@ -251,7 +312,10 @@
       });
       
       const result = await response.json();
-      if (result.error) {
+      if (result.error === 'auth_error') {
+        forceLogout(result.message);
+        return;
+      } else if (result.error) {
         alert(result.error);
         return;
       }
@@ -266,18 +330,12 @@
     }
   });
 
-  // レコードの削除
+  // レコード削除
   async function deleteRecord(row) {
     if (!confirm("この記録を削除してもよろしいですか？")) return;
-    
-    // 削除中表示
     historyList.innerHTML = '<li style="color: #888;">削除中...</li>';
 
-    const payload = {
-      action: 'delete',
-      row: row,
-      pass: SECRET_KEY
-    };
+    const payload = { action: 'delete', row: row, pass: currentPass };
 
     try {
       const response = await fetch(GAS_URL, {
@@ -286,7 +344,12 @@
         body: JSON.stringify(payload)
       });
       const result = await response.json();
-      if (result.error) alert(result.error);
+      if (result.error === 'auth_error') {
+        forceLogout(result.message);
+        return;
+      } else if (result.error) {
+        alert(result.error);
+      }
       
       if (editingRow === row) resetForm();
       await loadData();
@@ -296,10 +359,8 @@
     }
   }
 
-  // 編集モードに入る処理
   function startEdit(row, exercise, reps) {
     editingRow = row;
-    
     const options = [...exerciseSelect.options].map(o => o.value);
     if (options.includes(exercise)) {
       exerciseSelect.value = exercise;
@@ -312,18 +373,14 @@
     }
     
     repsInput.value = reps;
-    
     formTitle.textContent = "記録を修正する";
     formTitle.style.color = "var(--edit)";
     submitBtn.textContent = "更新する";
     submitBtn.style.backgroundColor = "var(--edit)";
     cancelBtn.classList.remove('hidden');
-
-    // フォームまでスクロール
     document.getElementById('input-form-card').scrollIntoView({ behavior: 'smooth' });
   }
 
-  // フォームを初期状態に戻す
   function resetForm() {
     editingRow = null;
     formTitle.textContent = "新しく記録する";
@@ -337,25 +394,26 @@
     customExerciseInput.value = '';
   }
 
-  // データをGASから取得
+  // データ取得
   async function loadData() {
     if (!GAS_URL.startsWith('http')) return;
-
     totalsList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
     historyList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
 
     try {
       const targetDate = dateSelect.value;
-      const response = await fetch(`${GAS_URL}?date=${targetDate}&pass=${SECRET_KEY}`);
+      const response = await fetch(`${GAS_URL}?date=${targetDate}&pass=${currentPass}`);
       const data = await response.json();
 
-      if (data.error) {
+      if (data.error === 'auth_error') {
+        forceLogout(data.message);
+        return;
+      } else if (data.error) {
         totalsList.innerHTML = `<li class="error-msg">${data.error}</li>`;
         historyList.innerHTML = `<li class="error-msg">${data.error}</li>`;
         return;
       }
 
-      // プルダウンの更新
       const currentSelection = exerciseSelect.value;
       exerciseSelect.innerHTML = '';
       data.choices.forEach(choice => {
@@ -368,7 +426,6 @@
         exerciseSelect.value = currentSelection;
       }
 
-      // 合計リストの更新
       totalsList.innerHTML = '';
       const totals = data.totals;
       if (Object.keys(totals).length === 0) {
@@ -386,7 +443,6 @@
         }
       }
 
-      // 履歴リストの更新
       historyList.innerHTML = '';
       const history = data.history || [];
       if (history.length === 0) {
@@ -394,7 +450,6 @@
       } else {
         history.forEach(item => {
           const li = document.createElement('li');
-          
           const textSpan = document.createElement('span');
           textSpan.className = 'history-text';
           textSpan.textContent = `${item.exercise} - ${item.reps}回`;
@@ -420,7 +475,6 @@
           historyList.appendChild(li);
         });
       }
-
     } catch (error) {
       totalsList.innerHTML = `<li class="error-msg">読込エラー: ${error.message}</li>`;
       historyList.innerHTML = `<li class="error-msg">読込エラー</li>`;
