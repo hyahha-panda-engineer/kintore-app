@@ -22,111 +22,46 @@
       padding: 20px;
       display: flex;
       justify-content: center;
-      padding-bottom: 50px;
+      padding-bottom: 80px; /* ナビゲーションバーの余白 */
     }
-    .container {
-      width: 100%;
-      max-width: 400px;
-    }
-    h1 {
-      text-align: center;
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    .card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-    .form-group {
-      margin-bottom: 16px;
-    }
-    .row-inputs {
-      display: flex;
-      gap: 10px;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #aaa;
-      font-weight: bold;
-    }
-    input, select {
-      width: 100%;
-      padding: 12px;
-      background-color: #2c2c2c;
-      border: 1px solid var(--border);
-      color: var(--text-color);
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    button {
-      width: 100%;
-      padding: 14px;
-      background-color: var(--primary);
-      color: #000;
-      border: none;
-      border-radius: 4px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:disabled {
-      background-color: #555;
-      cursor: not-allowed;
-    }
-    .btn-cancel {
-      background-color: #555;
-      color: #fff;
-      margin-top: 10px;
-    }
-    .btn-logout {
-      background-color: transparent;
-      color: var(--error);
-      border: 1px solid var(--error);
-      margin-top: 20px;
-    }
-    .totals-list, .history-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .totals-list li, .history-list li {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .totals-list li:last-child, .history-list li:last-child {
-      border-bottom: none;
-    }
-    .history-text {
-      font-size: 15px;
-    }
-    .btn-group {
-      display: flex;
-      gap: 6px;
-    }
-    .btn-small {
-      width: auto;
-      padding: 6px 10px;
-      font-size: 12px;
-      border-radius: 4px;
-    }
+    .container { width: 100%; max-width: 400px; }
+    h1 { text-align: center; font-size: 24px; margin-bottom: 20px; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .row-inputs { display: flex; gap: 10px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; color: #aaa; font-weight: bold; }
+    input, select { width: 100%; padding: 12px; background-color: #2c2c2c; border: 1px solid var(--border); color: var(--text-color); border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+    button { width: 100%; padding: 14px; background-color: var(--primary); color: #000; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    button:disabled { background-color: #555; cursor: not-allowed; }
+    .btn-cancel { background-color: #555; color: #fff; margin-top: 10px; }
+    
+    .totals-list, .history-list { list-style: none; padding: 0; margin: 0; }
+    .totals-list li, .history-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .totals-list li:last-child, .history-list li:last-child { border-bottom: none; }
+    .history-text { font-size: 15px; }
+    .btn-group { display: flex; gap: 6px; }
+    .btn-small { width: auto; padding: 6px 10px; font-size: 12px; border-radius: 4px; }
     .btn-edit { background-color: var(--edit); color: #000; }
     .btn-delete { background-color: var(--error); color: #fff; }
     
+    /* タブ・ナビゲーション */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background-color: #1e1e1e; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 10px 0; padding-bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 100; }
+    .nav-item { background: none; border: none; color: #888; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 30%; padding: 8px 0; }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 20px; }
+
+    /* グラフ */
+    .chart-container { display: flex; justify-content: space-between; align-items: flex-end; height: 160px; padding-top: 10px; margin-bottom: 10px; }
+    .chart-col { display: flex; flex-direction: column; align-items: center; width: 12%; }
+    .chart-bar-bg { width: 100%; height: 100px; background-color: #333; border-radius: 4px; display: flex; align-items: flex-end; margin-bottom: 6px; }
+    .chart-bar-fill { width: 100%; background-color: var(--primary); border-radius: 4px; transition: height 0.5s; }
+    .chart-label { font-size: 10px; color: #888; }
+    .chart-val { font-size: 10px; color: #e0e0e0; margin-bottom: 2px; }
+
     .hidden { display: none !important; }
-    .error-msg { color: var(--error); font-size: 14px; }
   </style>
 </head>
 <body>
@@ -143,70 +78,106 @@
     <button id="login-btn">ログイン</button>
   </div>
 
-  <!-- アプリ画面 -->
+  <!-- アプリ画面全体 -->
   <div id="app-section" class="hidden">
-    <!-- 日付選択 -->
-    <div class="card">
-      <div class="form-group" style="margin-bottom: 0;">
-        <label for="date-select">日付</label>
-        <input type="date" id="date-select">
-      </div>
-    </div>
-
-    <!-- 本日の合計 -->
-    <div class="card">
-      <label>この日の合計</label>
-      <ul id="totals-list" class="totals-list">
-        <li style="color: #888;">読み込み中...</li>
-      </ul>
-    </div>
-
-    <!-- 記録入力 / 編集フォーム -->
-    <div class="card" id="input-form-card">
-      <label id="form-title">新しく記録する</label>
-      <div class="form-group">
-        <select id="exercise-select">
-          <option value="">読込中...</option>
-        </select>
-      </div>
-      <div class="form-group hidden" id="custom-exercise-group">
-        <input type="text" id="custom-exercise" placeholder="種目を自由入力">
-      </div>
-      <div class="form-group row-inputs">
-        <input type="number" id="weight-input" placeholder="重量(kg) ※自重は空欄" min="0" step="0.5">
-        <input type="number" id="reps-input" placeholder="回数" min="1">
-      </div>
-      <button id="submit-btn">記録する</button>
-      <button id="cancel-btn" class="btn-cancel hidden">編集をキャンセル</button>
-    </div>
-
-    <!-- 本日の履歴 -->
-    <div class="card">
-      <label>履歴 (修正・削除)</label>
-      <ul id="history-list" class="history-list">
-        <li style="color: #888;">読み込み中...</li>
-      </ul>
-    </div>
     
-    <button id="logout-btn" class="btn-logout">ログアウト</button>
+    <!-- ▼▼ 入力タブ ▼▼ -->
+    <div id="tab-input" class="tab-content active">
+      <div class="card">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="date-select">日付</label>
+          <input type="date" id="date-select">
+        </div>
+      </div>
+
+      <div class="card">
+        <label>この日の合計</label>
+        <ul id="totals-list" class="totals-list"><li style="color: #888;">読み込み中...</li></ul>
+      </div>
+
+      <div class="card" id="input-form-card">
+        <label id="form-title">新しく記録する</label>
+        <div class="form-group">
+          <select id="exercise-select"><option value="">読込中...</option></select>
+        </div>
+        <div class="form-group hidden" id="custom-exercise-group">
+          <input type="text" id="custom-exercise" placeholder="種目を自由入力">
+        </div>
+        <div class="form-group row-inputs">
+          <input type="number" id="weight-input" placeholder="重量(kg) ※自重は空欄" min="0" step="0.5">
+          <input type="number" id="reps-input" placeholder="回数" min="1">
+        </div>
+        <button id="submit-btn">記録する</button>
+        <button id="cancel-btn" class="btn-cancel hidden">編集をキャンセル</button>
+      </div>
+
+      <div class="card">
+        <label>履歴 (修正・削除)</label>
+        <ul id="history-list" class="history-list"><li style="color: #888;">読み込み中...</li></ul>
+      </div>
+    </div>
+    <!-- ▲▲ 入力タブ ▲▲ -->
+
+
+    <!-- ▼▼ 分析タブ ▼▼ -->
+    <div id="tab-stats" class="tab-content">
+      <div class="card">
+        <label>直近7日間の総負荷</label>
+        <div id="volume-chart-container" class="chart-container">
+          <div style="color: #888; font-size: 14px; margin: auto;">読み込み中...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <label>種目別の成長記録</label>
+        <div class="form-group">
+          <select id="stats-exercise-select">
+            <option value="">種目を選択してください</option>
+          </select>
+        </div>
+        <ul id="stats-history-list" class="history-list">
+          <li style="color: #888;">上に種目を選んでください</li>
+        </ul>
+      </div>
+    </div>
+    <!-- ▲▲ 分析タブ ▲▲ -->
+
+    <!-- 下部ナビゲーション -->
+    <nav class="bottom-nav">
+      <button id="nav-input" class="nav-item active">
+        <span class="nav-icon">📝</span>
+        <span>入力</span>
+      </button>
+      <button id="nav-stats" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span>分析</span>
+      </button>
+      <button id="nav-logout" class="nav-item">
+        <span class="nav-icon">🚪</span>
+        <span>ログアウト</span>
+      </button>
+    </nav>
+
   </div>
 </div>
 
 <script>
   // ==========================================
   // ★ここにGASのURLを貼り付けてください
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbysN4BYl5VB9gRs-8p4vSNUPnr8WFzX8UA1-R18QNQHSQ_Q39t65B0cBslI9WeIIPyi/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxuGvcGzahjM8VWR0V8e90TMOJE2nV-L9W6R44hBpNa3rHqpqssij5xEL8jQGuByHDR/exec';
   // ==========================================
 
   let currentPass = localStorage.getItem('kintore_pass') || '';
   let editingRow = null;
+  let cachedStatsHistory = {}; // 分析タブ用のキャッシュ
 
+  // --- 要素の取得 ---
   const loginSection = document.getElementById('login-section');
   const appSection = document.getElementById('app-section');
   const passwordInput = document.getElementById('password-input');
   const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
 
+  // 入力タブ用
   const dateSelect = document.getElementById('date-select');
   const totalsList = document.getElementById('totals-list');
   const historyList = document.getElementById('history-list');
@@ -218,6 +189,18 @@
   const submitBtn = document.getElementById('submit-btn');
   const cancelBtn = document.getElementById('cancel-btn');
   const formTitle = document.getElementById('form-title');
+
+  // 分析タブ用
+  const volumeChartContainer = document.getElementById('volume-chart-container');
+  const statsExerciseSelect = document.getElementById('stats-exercise-select');
+  const statsHistoryList = document.getElementById('stats-history-list');
+
+  // タブ用
+  const tabInput = document.getElementById('tab-input');
+  const tabStats = document.getElementById('tab-stats');
+  const navInput = document.getElementById('nav-input');
+  const navStats = document.getElementById('nav-stats');
+  const navLogout = document.getElementById('nav-logout');
 
   init();
 
@@ -234,13 +217,14 @@
     if (currentPass) {
       loginSection.classList.add('hidden');
       appSection.classList.remove('hidden');
-      loadData();
+      loadDailyData(); // 初期表示は入力タブのデータ
     } else {
       loginSection.classList.remove('hidden');
       appSection.classList.add('hidden');
     }
   }
 
+  // --- ログイン / ログアウト ---
   loginBtn.addEventListener('click', () => {
     const pass = passwordInput.value.trim();
     if (!pass) return;
@@ -256,12 +240,31 @@
     localStorage.removeItem('kintore_pass');
     checkLoginState();
   }
-  
-  logoutBtn.addEventListener('click', () => forceLogout("ログアウトしました"));
+  navLogout.addEventListener('click', () => {
+    if(confirm("ログアウトしますか？")) forceLogout();
+  });
 
+  // --- タブ切り替え ---
+  navInput.addEventListener('click', () => {
+    tabInput.classList.add('active');
+    tabStats.classList.remove('active');
+    navInput.classList.add('active');
+    navStats.classList.remove('active');
+    loadDailyData();
+  });
+
+  navStats.addEventListener('click', () => {
+    tabStats.classList.add('active');
+    tabInput.classList.remove('active');
+    navStats.classList.add('active');
+    navInput.classList.remove('active');
+    loadStatsData();
+  });
+
+  // --- 入力タブのイベント ---
   dateSelect.addEventListener('change', () => {
     resetForm();
-    loadData();
+    loadDailyData();
   });
 
   exerciseSelect.addEventListener('change', (e) => {
@@ -275,6 +278,7 @@
 
   cancelBtn.addEventListener('click', resetForm);
 
+  // 記録送信
   submitBtn.addEventListener('click', async () => {
     const date = dateSelect.value;
     let exercise = exerciseSelect.value;
@@ -306,63 +310,52 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
       });
-      
       const result = await response.json();
-      if (result.error === 'auth_error') {
-        forceLogout(result.message);
-        return;
-      } else if (result.error) {
-        alert(result.error);
-        return;
-      }
+      if (result.error === 'auth_error') { forceLogout(result.message); return; }
+      else if (result.error) { alert(result.error); return; }
       
       resetForm();
-      await loadData();
+      await loadDailyData();
     } catch (error) {
-      alert("エラーが発生しました: " + error.message);
+      alert("エラー: " + error.message);
     } finally {
       submitBtn.disabled = false;
     }
   });
 
+  // レコード削除
   async function deleteRecord(row) {
-    if (!confirm("この記録を削除してもよろしいですか？")) return;
+    if (!confirm("削除しますか？")) return;
     historyList.innerHTML = '<li style="color: #888;">削除中...</li>';
-    const payload = { action: 'delete', row: row, pass: currentPass };
-
     try {
       const response = await fetch(GAS_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ action: 'delete', row: row, pass: currentPass })
       });
       const result = await response.json();
-      if (result.error === 'auth_error') {
-        forceLogout(result.message);
-        return;
-      } else if (result.error) alert(result.error);
+      if (result.error === 'auth_error') { forceLogout(result.message); return; }
       
       if (editingRow === row) resetForm();
-      await loadData();
+      await loadDailyData();
     } catch (error) {
-      alert("エラーが発生しました: " + error.message);
-      await loadData();
+      alert("エラー: " + error.message);
+      await loadDailyData();
     }
   }
 
+  // 編集開始
   function startEdit(row, exercise, weight, reps) {
     editingRow = row;
     const options = [...exerciseSelect.options].map(o => o.value);
     if (options.includes(exercise)) {
       exerciseSelect.value = exercise;
       customExerciseGroup.classList.add('hidden');
-      customExerciseInput.value = '';
     } else {
       exerciseSelect.value = 'その他';
       customExerciseGroup.classList.remove('hidden');
       customExerciseInput.value = exercise;
     }
-    
     weightInput.value = weight > 0 ? weight : '';
     repsInput.value = reps;
     
@@ -385,10 +378,10 @@
     repsInput.value = '';
     exerciseSelect.value = '';
     customExerciseGroup.classList.add('hidden');
-    customExerciseInput.value = '';
   }
 
-  async function loadData() {
+  // --- データ通信（入力タブ用） ---
+  async function loadDailyData() {
     if (!GAS_URL.startsWith('http')) return;
     totalsList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
     historyList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
@@ -398,15 +391,9 @@
       const response = await fetch(`${GAS_URL}?date=${targetDate}&pass=${currentPass}`);
       const data = await response.json();
 
-      if (data.error === 'auth_error') {
-        forceLogout(data.message);
-        return;
-      } else if (data.error) {
-        totalsList.innerHTML = `<li class="error-msg">${data.error}</li>`;
-        historyList.innerHTML = `<li class="error-msg">${data.error}</li>`;
-        return;
-      }
+      if (data.error === 'auth_error') { forceLogout(data.message); return; }
 
+      // プルダウン更新
       const currentSelection = exerciseSelect.value;
       exerciseSelect.innerHTML = '';
       data.choices.forEach(choice => {
@@ -419,74 +406,165 @@
         exerciseSelect.value = currentSelection;
       }
 
-      // 合計リストの描画
+      // 合計更新
       totalsList.innerHTML = '';
-      const totals = data.totals;
-      if (Object.keys(totals).length === 0) {
+      if (Object.keys(data.totals).length === 0) {
         totalsList.innerHTML = '<li style="color: #888;">この日の記録はありません</li>';
       } else {
-        for (const [ex, stats] of Object.entries(totals)) {
+        for (const [ex, stats] of Object.entries(data.totals)) {
           const li = document.createElement('li');
           const nameSpan = document.createElement('span');
           nameSpan.textContent = ex;
           const countSpan = document.createElement('span');
-          
-          // 総負荷量(kg)がある場合は表示、自重のみなら回数だけ
-          if (stats.volume > 0) {
-            countSpan.textContent = `${stats.volume}kg (${stats.reps}回)`;
-          } else {
-            countSpan.textContent = `${stats.reps}回`;
-          }
-          
+          countSpan.textContent = stats.volume > 0 ? `${stats.volume}kg (${stats.reps}回)` : `${stats.reps}回`;
           li.appendChild(nameSpan);
           li.appendChild(countSpan);
           totalsList.appendChild(li);
         }
       }
 
-      // 履歴リストの描画
+      // 履歴更新
       historyList.innerHTML = '';
-      const history = data.history || [];
-      if (history.length === 0) {
+      if (data.history.length === 0) {
         historyList.innerHTML = '<li style="color: #888;">この日の記録はありません</li>';
       } else {
-        history.forEach(item => {
+        data.history.forEach(item => {
           const li = document.createElement('li');
           const textSpan = document.createElement('span');
           textSpan.className = 'history-text';
-          
-          if (item.weight > 0) {
-            textSpan.textContent = `${item.exercise} - ${item.weight}kg × ${item.reps}回`;
-          } else {
-            textSpan.textContent = `${item.exercise} - ${item.reps}回`;
-          }
+          textSpan.textContent = item.weight > 0 ? `${item.exercise} - ${item.weight}kg × ${item.reps}回` : `${item.exercise} - ${item.reps}回`;
           
           const btnGroup = document.createElement('div');
           btnGroup.className = 'btn-group';
-          
           const editBtn = document.createElement('button');
-          editBtn.className = 'btn-small btn-edit';
-          editBtn.textContent = '編集';
+          editBtn.className = 'btn-small btn-edit'; editBtn.textContent = '編集';
           editBtn.onclick = () => startEdit(item.row, item.exercise, item.weight, item.reps);
-          
           const delBtn = document.createElement('button');
-          delBtn.className = 'btn-small btn-delete';
-          delBtn.textContent = '削除';
+          delBtn.className = 'btn-small btn-delete'; delBtn.textContent = '削除';
           delBtn.onclick = () => deleteRecord(item.row);
           
-          btnGroup.appendChild(editBtn);
-          btnGroup.appendChild(delBtn);
-          
-          li.appendChild(textSpan);
-          li.appendChild(btnGroup);
+          btnGroup.appendChild(editBtn); btnGroup.appendChild(delBtn);
+          li.appendChild(textSpan); li.appendChild(btnGroup);
           historyList.appendChild(li);
         });
       }
     } catch (error) {
       totalsList.innerHTML = `<li class="error-msg">読込エラー: ${error.message}</li>`;
-      historyList.innerHTML = `<li class="error-msg">読込エラー</li>`;
     }
   }
+
+  // --- データ通信（分析タブ用） ---
+  async function loadStatsData() {
+    volumeChartContainer.innerHTML = '<div style="color: #888; font-size: 14px; margin: auto;">読み込み中...</div>';
+    
+    try {
+      const response = await fetch(`${GAS_URL}?mode=stats&pass=${currentPass}`);
+      const data = await response.json();
+      if (data.error === 'auth_error') { forceLogout(data.message); return; }
+
+      // グラフの描画
+      renderVolumeChart(data.volumeByDate);
+
+      // 種目プルダウンの更新
+      const currentSelection = statsExerciseSelect.value;
+      statsExerciseSelect.innerHTML = '<option value="">種目を選択してください</option>';
+      data.choices.forEach(choice => {
+        const option = document.createElement('option');
+        option.value = choice;
+        option.textContent = choice;
+        statsExerciseSelect.appendChild(option);
+      });
+      if (currentSelection && [...statsExerciseSelect.options].some(o => o.value === currentSelection)) {
+        statsExerciseSelect.value = currentSelection;
+      }
+      
+      // 履歴データをキャッシュしてプルダウン変更時に再描画できるようにする
+      cachedStatsHistory = data.historyByExercise;
+      renderStatsHistory();
+
+    } catch (error) {
+      volumeChartContainer.innerHTML = `<div class="error-msg" style="margin: auto;">読込エラー: ${error.message}</div>`;
+    }
+  }
+
+  // グラフ描画ロジック
+  function renderVolumeChart(volumeByDate) {
+    volumeChartContainer.innerHTML = '';
+    
+    // 過去7日間の日付配列を作成
+    const last7Days = [];
+    for(let i=6; i>=0; i--) {
+      let d = new Date();
+      d.setDate(d.getDate() - i);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      last7Days.push(`${yyyy}-${mm}-${dd}`);
+    }
+
+    let maxVol = 1; // 0除算防止
+    const volumes = last7Days.map(date => {
+      const v = volumeByDate[date] || 0;
+      if(v > maxVol) maxVol = v;
+      return v;
+    });
+
+    last7Days.forEach((date, i) => {
+      const vol = volumes[i];
+      const heightPct = (vol / maxVol) * 100;
+      const dayLabel = date.substring(5).replace('-', '/'); // "10/18"
+
+      const barCol = document.createElement('div');
+      barCol.className = 'chart-col';
+      barCol.innerHTML = `
+        <div class="chart-val">${vol > 0 ? vol : ''}</div>
+        <div class="chart-bar-bg">
+          <div class="chart-bar-fill" style="height: ${heightPct}%;"></div>
+        </div>
+        <div class="chart-label">${dayLabel}</div>
+      `;
+      volumeChartContainer.appendChild(barCol);
+    });
+  }
+
+  // 分析タブのプルダウン変更時のイベント
+  statsExerciseSelect.addEventListener('change', renderStatsHistory);
+
+  // 種目別履歴の描画ロジック
+  function renderStatsHistory() {
+    const selected = statsExerciseSelect.value;
+    statsHistoryList.innerHTML = '';
+    
+    if (!selected) {
+      statsHistoryList.innerHTML = '<li style="color: #888;">上に種目を選んでください</li>';
+      return;
+    }
+
+    const historyData = cachedStatsHistory[selected] || [];
+    if (historyData.length === 0) {
+      statsHistoryList.innerHTML = '<li style="color: #888;">この種目の記録はまだありません</li>';
+      return;
+    }
+
+    // 最新10件まで表示
+    historyData.slice(0, 10).forEach(item => {
+      const li = document.createElement('li');
+      
+      const dateSpan = document.createElement('span');
+      dateSpan.style.color = '#aaa';
+      dateSpan.style.fontSize = '14px';
+      dateSpan.textContent = item.date.replace(/-/g, '/');
+      
+      const valSpan = document.createElement('span');
+      valSpan.style.fontWeight = 'bold';
+      valSpan.textContent = item.weight > 0 ? `${item.weight}kg × ${item.reps}回` : `${item.reps}回`;
+      
+      li.appendChild(dateSpan);
+      li.appendChild(valSpan);
+      statsHistoryList.appendChild(li);
+    });
+  }
+
 </script>
 </body>
 </html>
