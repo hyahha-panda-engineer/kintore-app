@@ -198,7 +198,7 @@
 <script>
   // ==========================================
   // ★ここにGASのURLを貼り付けてください
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxuGvcGzahjM8VWR0V8e90TMOJE2nV-L9W6R44hBpNa3rHqpqssij5xEL8jQGuByHDR/exec';
+  const GAS_URL = 'YOUR_GAS_WEB_APP_URL';
   // ==========================================
 
   let currentPass = localStorage.getItem('kintore_pass') || '';
@@ -239,7 +239,118 @@
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
-    dateSelect.value = `${yyyy}-${mm}-${dd}`; checkLoginState(); }  function checkLoginState() { if (currentPass) { loginSection.classList.add('hidden'); appSection.classList.remove('hidden'); loadDailyData(); } else { loginSection.classList.remove('hidden'); appSection.classList.add('hidden'); } }  loginBtn.addEventListener('click', () => { const pass = passwordInput.value.trim(); if (!pass) return; currentPass = pass; localStorage.setItem('kintore_pass', pass); passwordInput.value = ''; checkLoginState(); });  function forceLogout(message) { if (message) alert(message); currentPass = ''; localStorage.removeItem('kintore_pass'); checkLoginState(); } navLogout.addEventListener('click', () => { if(confirm("ログアウトしますか？")) forceLogout(); });  navInput.addEventListener('click', () => { tabInput.classList.add('active'); tabStats.classList.remove('active'); navInput.classList.add('active'); navStats.classList.remove('active'); loadDailyData(); });  navStats.addEventListener('click', () => { tabStats.classList.add('active'); tabInput.classList.remove('active'); navStats.classList.add('active'); navInput.classList.remove('active'); loadStatsData(); });  dateSelect.addEventListener('change', () => { resetForm(); loadDailyData(); });  exerciseSelect.addEventListener('change', (e) => { if (e.target.value === 'その他') { customExerciseGroup.classList.remove('hidden'); } else { customExerciseGroup.classList.add('hidden'); customExerciseInput.value = ''; } });  cancelBtn.addEventListener('click', resetForm);  submitBtn.addEventListener('click', async () => { const date = dateSelect.value; let exercise = exerciseSelect.value; if (exercise === 'その他') exercise = customExerciseInput.value.trim(); const weight = parseFloat(weightInput.value) \vert{}\vert{} 0; const reps = parseInt(repsInput.value, 10);  if (!date \vert{}\vert{} !exercise \vert{}\vert{} !reps \vert{}\vert{} reps <= 0) { alert("種目と回数は正しく入力してください。"); return; }  submitBtn.disabled = true; submitBtn.textContent = "送信中...";  const payload = { action: editingRow ? 'update' : 'add', row: editingRow, date: date, exercise: exercise, weight: weight, reps: reps, pass: currentPass }; try { const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); const result = await response.json(); if (result.error === 'auth_error') { forceLogout(result.message); return; } else if (result.error) { alert(result.error); return; } resetForm(); await loadDailyData(); } catch (error) { alert("エラー: " + error.message); } finally { submitBtn.disabled = false; } });  async function deleteRecord(row) { if (!confirm("削除しますか？")) return; historyList.innerHTML = '<li style="color: #888;">削除中...</li>'; try { const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'delete', row: row, pass: currentPass }) }); const result = await response.json(); if (result.error === 'auth_error') { forceLogout(result.message); return; } if (editingRow === row) resetForm(); await loadDailyData(); } catch (error) { alert("エラー: " + error.message); await loadDailyData(); } }  function startEdit(row, exercise, weight, reps) { editingRow = row; const options = [...exerciseSelect.options].map(o => o.value); if (options.includes(exercise)) { exerciseSelect.value = exercise; customExerciseGroup.classList.add('hidden'); } else { exerciseSelect.value = 'その他'; customExerciseGroup.classList.remove('hidden'); customExerciseInput.value = exercise; } weightInput.value = weight > 0 ? weight : ''; repsInput.value = reps; formTitle.textContent = "記録を修正する"; formTitle.style.color = "var(--edit)"; submitBtn.textContent = "更新する"; submitBtn.style.backgroundColor = "var(--edit)"; cancelBtn.classList.remove('hidden'); document.getElementById('input-form-card').scrollIntoView({ behavior: 'smooth' }); }  function resetForm() { editingRow = null; formTitle.textContent = "新しく記録する"; formTitle.style.color = "#aaa"; submitBtn.textContent = "記録する"; submitBtn.style.backgroundColor = "var(--primary)"; cancelBtn.classList.add('hidden'); weightInput.value = ''; repsInput.value = ''; exerciseSelect.value = ''; customExerciseGroup.classList.add('hidden'); }  async function loadDailyData() { if (!GAS_URL.startsWith('http')) return; totalsList.innerHTML = '<li style="color: #888;">読み込み中...</li>'; historyList.innerHTML = '<li style="color: #888;">読み込み中...</li>'; try { const response = await fetch(`${GAS_URL}?date=${dateSelect.value}&pass=${currentPass}`);
+    dateSelect.value = `${yyyy}-${mm}-${dd}`;
+    checkLoginState();
+  }
+
+  function checkLoginState() {
+    if (currentPass) {
+      loginSection.classList.add('hidden');
+      appSection.classList.remove('hidden');
+      loadDailyData();
+    } else {
+      loginSection.classList.remove('hidden');
+      appSection.classList.add('hidden');
+    }
+  }
+
+  loginBtn.addEventListener('click', () => {
+    const pass = passwordInput.value.trim();
+    if (!pass) return;
+    currentPass = pass;
+    localStorage.setItem('kintore_pass', pass);
+    passwordInput.value = '';
+    checkLoginState();
+  });
+
+  function forceLogout(message) {
+    if (message) alert(message);
+    currentPass = '';
+    localStorage.removeItem('kintore_pass');
+    checkLoginState();
+  }
+  navLogout.addEventListener('click', () => {
+    if(confirm("ログアウトしますか？")) forceLogout();
+  });
+
+  navInput.addEventListener('click', () => {
+    tabInput.classList.add('active'); tabStats.classList.remove('active');
+    navInput.classList.add('active'); navStats.classList.remove('active');
+    loadDailyData();
+  });
+
+  navStats.addEventListener('click', () => {
+    tabStats.classList.add('active'); tabInput.classList.remove('active');
+    navStats.classList.add('active'); navInput.classList.remove('active');
+    loadStatsData();
+  });
+
+  dateSelect.addEventListener('change', () => { resetForm(); loadDailyData(); });
+
+  exerciseSelect.addEventListener('change', (e) => {
+    if (e.target.value === 'その他') { customExerciseGroup.classList.remove('hidden'); } 
+    else { customExerciseGroup.classList.add('hidden'); customExerciseInput.value = ''; }
+  });
+
+  cancelBtn.addEventListener('click', resetForm);
+
+  submitBtn.addEventListener('click', async () => {
+    const date = dateSelect.value;
+    let exercise = exerciseSelect.value;
+    if (exercise === 'その他') exercise = customExerciseInput.value.trim();
+    const weight = parseFloat(weightInput.value) || 0;
+    const reps = parseInt(repsInput.value, 10);
+
+    if (!date || !exercise || !reps || reps <= 0) { alert("種目と回数は正しく入力してください。"); return; }
+
+    submitBtn.disabled = true; submitBtn.textContent = "送信中...";
+
+    const payload = { action: editingRow ? 'update' : 'add', row: editingRow, date: date, exercise: exercise, weight: weight, reps: reps, pass: currentPass };
+    try {
+      const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+      const result = await response.json();
+      if (result.error === 'auth_error') { forceLogout(result.message); return; }
+      else if (result.error) { alert(result.error); return; }
+      resetForm(); await loadDailyData();
+    } catch (error) { alert("エラー: " + error.message); } 
+    finally { submitBtn.disabled = false; }
+  });
+
+  async function deleteRecord(row) {
+    if (!confirm("削除しますか？")) return;
+    historyList.innerHTML = '<li style="color: #888;">削除中...</li>';
+    try {
+      const response = await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'delete', row: row, pass: currentPass }) });
+      const result = await response.json();
+      if (result.error === 'auth_error') { forceLogout(result.message); return; }
+      if (editingRow === row) resetForm();
+      await loadDailyData();
+    } catch (error) { alert("エラー: " + error.message); await loadDailyData(); }
+  }
+
+  function startEdit(row, exercise, weight, reps) {
+    editingRow = row;
+    const options = [...exerciseSelect.options].map(o => o.value);
+    if (options.includes(exercise)) {
+      exerciseSelect.value = exercise; customExerciseGroup.classList.add('hidden');
+    } else {
+      exerciseSelect.value = 'その他'; customExerciseGroup.classList.remove('hidden'); customExerciseInput.value = exercise;
+    }
+    weightInput.value = weight > 0 ? weight : ''; repsInput.value = reps;
+    formTitle.textContent = "記録を修正する"; formTitle.style.color = "var(--edit)"; submitBtn.textContent = "更新する"; submitBtn.style.backgroundColor = "var(--edit)";
+    cancelBtn.classList.remove('hidden'); document.getElementById('input-form-card').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function resetForm() {
+    editingRow = null; formTitle.textContent = "新しく記録する"; formTitle.style.color = "#aaa"; submitBtn.textContent = "記録する"; submitBtn.style.backgroundColor = "var(--primary)";
+    cancelBtn.classList.add('hidden'); weightInput.value = ''; repsInput.value = ''; exerciseSelect.value = ''; customExerciseGroup.classList.add('hidden');
+  }
+
+  async function loadDailyData() {
+    if (!GAS_URL.startsWith('http')) return;
+    totalsList.innerHTML = '<li style="color: #888;">読み込み中...</li>'; historyList.innerHTML = '<li style="color: #888;">読み込み中...</li>';
+    try {
+      const response = await fetch(`${GAS_URL}?date=${dateSelect.value}&pass=${currentPass}`);
       const data = await response.json();
       if (data.error === 'auth_error') { forceLogout(data.message); return; }
 
@@ -255,7 +366,17 @@
       else {
         for (const [ex, stats] of Object.entries(data.totals)) {
           const li = document.createElement('li'); const nameSpan = document.createElement('span'); nameSpan.textContent = ex; const countSpan = document.createElement('span');
-          countSpan.textContent = stats.volume > 0 ? `${stats.volume}kg (${stats.reps}回)` : `${stats.reps}回`; li.appendChild(nameSpan); li.appendChild(countSpan); totalsList.appendChild(li); } }  historyList.innerHTML = ''; if (data.history.length === 0) { historyList.innerHTML = '<li style="color: #888;">この日の記録はありません</li>'; } else { data.history.forEach(item => { const li = document.createElement('li'); const textSpan = document.createElement('span'); textSpan.className = 'history-text'; textSpan.textContent = item.weight > 0 ? `${item.exercise} - ${item.weight}kg × ${item.reps}回` : `${item.exercise} -${item.reps}回`;
+          countSpan.textContent = stats.volume > 0 ? `${stats.volume}kg (${stats.reps}回)` : `${stats.reps}回`;
+          li.appendChild(nameSpan); li.appendChild(countSpan); totalsList.appendChild(li);
+        }
+      }
+
+      historyList.innerHTML = '';
+      if (data.history.length === 0) { historyList.innerHTML = '<li style="color: #888;">この日の記録はありません</li>'; } 
+      else {
+        data.history.forEach(item => {
+          const li = document.createElement('li'); const textSpan = document.createElement('span'); textSpan.className = 'history-text';
+          textSpan.textContent = item.weight > 0 ? `${item.exercise} - ${item.weight}kg × ${item.reps}回` : `${item.exercise} - ${item.reps}回`;
           
           const btnGroup = document.createElement('div'); btnGroup.className = 'btn-group';
           const editBtn = document.createElement('button'); editBtn.className = 'btn-small btn-edit'; editBtn.textContent = '編集'; editBtn.onclick = () => startEdit(item.row, item.exercise, item.weight, item.reps);
@@ -265,4 +386,134 @@
           li.appendChild(textSpan); li.appendChild(btnGroup); historyList.appendChild(li);
         });
       }
-    } catch (error) { totalsList.innerHTML = `<li class="error-msg">読込エラー: ${error.message}</li>`; } }  async function loadStatsData() { volumeChartContainer.innerHTML = '<div style="color: #888; font-size: 14px; margin: auto;">読み込み中...</div>'; try { const response = await fetch(`${GAS_URL}?mode
+    } catch (error) { totalsList.innerHTML = `<li class="error-msg">読込エラー: ${error.message}</li>`; }
+  }
+
+  async function loadStatsData() {
+    volumeChartContainer.innerHTML = '<div style="color: #888; font-size: 14px; margin: auto;">読み込み中...</div>';
+    try {
+      const response = await fetch(`${GAS_URL}?mode=stats&pass=${currentPass}`);
+      const data = await response.json();
+      if (data.error === 'auth_error') { forceLogout(data.message); return; }
+
+      renderVolumeChart(data.volumeByDate);
+
+      const currentSelection = statsExerciseSelect.value;
+      statsExerciseSelect.innerHTML = '<option value="">種目を選択してください</option>';
+      data.choices.forEach(choice => {
+        const option = document.createElement('option'); option.value = choice; option.textContent = choice; statsExerciseSelect.appendChild(option);
+      });
+      if (currentSelection && [...statsExerciseSelect.options].some(o => o.value === currentSelection)) { statsExerciseSelect.value = currentSelection; }
+      
+      cachedStatsHistory = data.historyByExercise;
+      renderStatsHistory();
+    } catch (error) { volumeChartContainer.innerHTML = `<div class="error-msg" style="margin: auto;">読込エラー: ${error.message}</div>`; }
+  }
+
+  function renderVolumeChart(volumeByDate) {
+    volumeChartContainer.innerHTML = '';
+    const last7Days = [];
+    for(let i=6; i>=0; i--) {
+      let d = new Date(); d.setDate(d.getDate() - i);
+      const yyyy = d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0');
+      last7Days.push(`${yyyy}-${mm}-${dd}`);
+    }
+
+    let maxVol = 1;
+    const volumes = last7Days.map(date => { const v = volumeByDate[date] || 0; if(v > maxVol) maxVol = v; return v; });
+
+    last7Days.forEach((date, i) => {
+      const vol = volumes[i]; const heightPct = (vol / maxVol) * 100; const dayLabel = date.substring(5).replace('-', '/');
+      const barCol = document.createElement('div'); barCol.className = 'chart-col';
+      barCol.innerHTML = `
+        <div class="chart-val">${vol > 0 ? vol : ''}</div>
+        <div class="chart-bar-bg"><div class="chart-bar-fill" style="height: ${heightPct}%;"></div></div>
+        <div class="chart-label">${dayLabel}</div>
+      `;
+      volumeChartContainer.appendChild(barCol);
+    });
+  }
+
+  // プルダウンとラジオボタンの変更で再描画
+  statsExerciseSelect.addEventListener('change', renderStatsHistory);
+  
+  document.querySelectorAll('input[name="stats-sort"]').forEach(radio => {
+    radio.addEventListener('change', renderStatsHistory);
+  });
+  
+  document.querySelectorAll('input[name="stats-filter"]').forEach(radio => {
+    radio.addEventListener('change', renderStatsHistory);
+  });
+
+  function renderStatsHistory() {
+    const selected = statsExerciseSelect.value;
+    const sortMode = document.querySelector('input[name="stats-sort"]:checked').value;
+    const filterMode = document.querySelector('input[name="stats-filter"]:checked').value;
+    
+    statsHistoryList.innerHTML = '';
+    
+    if (!selected) { statsHistoryList.innerHTML = '<li style="color: #888;">上に種目を選んでください</li>'; return; }
+    
+    let historyData = cachedStatsHistory[selected] || [];
+    
+    // --- 絞り込みフィルターの適用 ---
+    if (filterMode === 'bodyweight') {
+      historyData = historyData.filter(item => item.weight === 0);
+    } else if (filterMode === 'weighted') {
+      historyData = historyData.filter(item => item.weight > 0);
+    }
+
+    if (historyData.length === 0) { statsHistoryList.innerHTML = '<li style="color: #888;">この条件の記録はまだありません</li>'; return; }
+
+    if (sortMode === 'single') {
+      // ① 一回での最高記録順 (重量 > 回数 > 日付)
+      const sorted = [...historyData].sort((a, b) => {
+        if (b.weight !== a.weight) return b.weight - a.weight;
+        if (b.reps !== a.reps) return b.reps - a.reps;
+        return b.date > a.date ? 1 : -1;
+      });
+
+      sorted.slice(0, 10).forEach((item, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span style="color:#aaa; font-size:12px; margin-right:10px; width:25px;">${index + 1}位</span>
+          <span style="color:#888; font-size:13px; flex:1;">${item.date.replace(/-/g, '/')}</span>
+          <span style="font-weight:bold; color:#e0e0e0;">${item.weight > 0 ? `${item.weight}kg × ${item.reps}回` : `${item.reps}回`}</span>
+        `;
+        statsHistoryList.appendChild(li);
+      });
+
+    } else {
+      // ② 一日の総負荷記録順
+      let dailyMap = {};
+      historyData.forEach(item => {
+        if (!dailyMap[item.date]) dailyMap[item.date] = { volume: 0, sets: 0 };
+        dailyMap[item.date].volume += (item.weight > 0 ? item.weight * item.reps : item.reps);
+        dailyMap[item.date].sets += 1;
+      });
+
+      let dailyArr = Object.keys(dailyMap).map(date => ({ date: date, volume: dailyMap[date].volume, sets: dailyMap[date].sets }));
+      
+      dailyArr.sort((a, b) => {
+        if (b.volume !== a.volume) return b.volume - a.volume;
+        return b.date > a.date ? 1 : -1;
+      });
+
+      // 荷重データが含まれているかチェック（表示単位切り替え用）
+      const isWeightMode = historyData.some(h => h.weight > 0);
+
+      dailyArr.slice(0, 10).forEach((item, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span style="color:#aaa; font-size:12px; margin-right:10px; width:25px;">${index + 1}位</span>
+          <span style="color:#888; font-size:13px; flex:1;">${item.date.replace(/-/g, '/')}</span>
+          <span style="font-weight:bold; color:var(--primary);">${item.volume}${isWeightMode ? 'kg' : '回'} <span style="font-size:11px;color:#888;font-weight:normal;">(${item.sets}set)</span></span>
+        `;
+        statsHistoryList.appendChild(li);
+      });
+    }
+  }
+
+</script>
+</body>
+</html>
