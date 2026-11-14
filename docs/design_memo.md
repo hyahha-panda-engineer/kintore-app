@@ -52,8 +52,8 @@ flowchart TD
 ### 2.2 技術スタック
 | レイヤー | 技術 / サービス | 説明 |
 | :--- | :--- | :--- |
-| **フロントエンド** | HTML5 / CSS3 / JavaScript (ES6+) | 依存関係なし（Vanilla JS）、単一ファイル構成 |
-| **ホスティング** | GitHub Pages | GitHub Actions 経由で `index.html` を静的配信 |
+| **フロントエンド** | HTML5 / CSS3 / JavaScript (ES6+) | 依存関係なし（Vanilla JS）、HTML/CSS/JS 分離構成 |
+| **ホスティング** | GitHub Pages | GitHub Actions 経由で静的配信 |
 | **バックエンド** | Google Apps Script (GAS) | Web App として公開。RESTライクなエンドポイントを提供 |
 | **データベース** | Google スプレッドシート | データの永続化ストア |
 
@@ -63,16 +63,24 @@ flowchart TD
 
 ```
 50_kintore/
+├── .agents/
+│   └── rules/
+│       ├── git.md         # Git運用・コミットルール
+│       └── project.md     # プロジェクト概要・開発方針
 ├── .github/
 │   └── workflows/
 │       └── static.yml     # GitHub Pages 自動デプロイ設定
+├── css/
+│   └── style.css          # アプリスタイル定義 (ダークテーマ・モバイル最適化)
 ├── docs/
-│   └── design_memo.md    # 設計メモ（本書）
+│   └── design_memo.md     # 設計メモ（本書）
 ├── gas_side/
-│   └── gas.js            # GAS 側バックエンドスクリプト（※.gitignore 対象）
-├── .gitignore            # 除外ファイル設定
-├── index.html            # フロントエンド単一ファイル (SPA)
-└── memo.txt              # デプロイ済みGASのWeb App URL記録用（※.gitignore 対象）
+│   └── gas.js             # GAS 側バックエンドスクリプト（※.gitignore 対象）
+├── js/
+│   └── app.js             # フロントエンドロジック (Vanilla JS)
+├── .gitignore             # 除外ファイル設定
+├── index.html             # フロントエンドHTML (SPA構造)
+└── memo.txt               # デプロイ済みGASのWeb App URL記録用（※.gitignore 対象）
 ```
 
 > [!NOTE]
