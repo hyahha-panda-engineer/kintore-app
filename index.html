@@ -161,7 +161,7 @@
         <div class="segment-control form-group">
           <label>
             <input type="radio" name="stats-sort" value="single" checked>
-            <span>一回の最高記録</span>
+            <span>1セット最高負荷</span>
           </label>
           <label>
             <input type="radio" name="stats-sort" value="daily">
@@ -434,7 +434,6 @@
     });
   }
 
-  // プルダウンとラジオボタンの変更で再描画
   statsExerciseSelect.addEventListener('change', renderStatsHistory);
   
   document.querySelectorAll('input[name="stats-sort"]').forEach(radio => {
@@ -456,7 +455,7 @@
     
     let historyData = cachedStatsHistory[selected] || [];
     
-    // --- 絞り込みフィルターの適用 ---
+    // 絞り込みフィルターの適用
     if (filterMode === 'bodyweight') {
       historyData = historyData.filter(item => item.weight === 0);
     } else if (filterMode === 'weighted') {
@@ -466,19 +465,26 @@
     if (historyData.length === 0) { statsHistoryList.innerHTML = '<li style="color: #888;">この条件の記録はまだありません</li>'; return; }
 
     if (sortMode === 'single') {
-      // ① 一回での最高記録順 (重量 > 回数 > 日付)
+      // ① 1セットの総負荷量（重量 × 回数）順（自重は回数）
       const sorted = [...historyData].sort((a, b) => {
+        const volA = a.weight > 0 ? a.weight * a.reps : a.reps;
+        const volB = b.weight > 0 ? b.weight * b.reps : b.reps;
+        if (volB !== volA) return volB - volA;
         if (b.weight !== a.weight) return b.weight - a.weight;
-        if (b.reps !== a.reps) return b.reps - a.reps;
         return b.date > a.date ? 1 : -1;
       });
 
       sorted.slice(0, 10).forEach((item, index) => {
         const li = document.createElement('li');
+        const singleVol = item.weight * item.reps;
+        const displayVal = item.weight > 0 
+          ? `${item.weight}kg × ${item.reps}回 <span style="font-size:12px;color:var(--primary);">(${singleVol}kg)</span>` 
+          : `${item.reps}回`;
+
         li.innerHTML = `
           <span style="color:#aaa; font-size:12px; margin-right:10px; width:25px;">${index + 1}位</span>
           <span style="color:#888; font-size:13px; flex:1;">${item.date.replace(/-/g, '/')}</span>
-          <span style="font-weight:bold; color:#e0e0e0;">${item.weight > 0 ? `${item.weight}kg × ${item.reps}回` : `${item.reps}回`}</span>
+          <span style="font-weight:bold; color:#e0e0e0;">${displayVal}</span>
         `;
         statsHistoryList.appendChild(li);
       });
@@ -499,7 +505,6 @@
         return b.date > a.date ? 1 : -1;
       });
 
-      // 荷重データが含まれているかチェック（表示単位切り替え用）
       const isWeightMode = historyData.some(h => h.weight > 0);
 
       dailyArr.slice(0, 10).forEach((item, index) => {
